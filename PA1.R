@@ -1,20 +1,18 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# non-markdown script to work more efficiently
+# start clean
+rm(list=ls())
+cat("\014")
 
+# set working directory
+setwd("~/Google Drive/Courses/ReproducibleResearch/RepData_PeerAssessment1/")
 
-## Loading and preprocessing the data
-```{r}
+# download data
 unzip('activity.zip')
-data = read.csv("activity.csv")
-```
 
-## What is mean total number of steps taken per day?
-```{r}
-# format the data specifically for this analysis
+# load data
+data = read.csv("activity.csv", stringsAsFactors=F)
+
+# 1) 
 data2 = data
 data2$date = strptime(data2$date, "%Y-%m-%d")
 library(lubridate)
@@ -28,10 +26,9 @@ qplot(total_steps$x, geom="histogram", binwidth = 1000,
       main = "Total steps per day")                  
 mean(total_steps$x, na.rm = T)
 median(total_steps$x, na.rm = T)
-```
+# these mean and median values are lower
 
-## What is the average daily activity pattern?
-```{r}
+## steps timecourse
 data2$interval = factor(data2$interval)
 steps_per_int = aggregate(data2$steps, list(data2$interval), mean)
 names(steps_per_int) = c("int", "steps")
@@ -40,10 +37,8 @@ p = ggplot(steps_per_int)
 p + geom_line(aes(x=int, y=steps))
 int_max_avg_steps = steps_per_int$int[steps_per_int$steps == max(steps_per_int$steps)]
 int_max_avg_steps
-```
 
-## Imputing missing values
-```{r}
+## missing values
 sum(is.na(data$steps))
 data3 = data
 data3$date = strptime(data3$date, "%Y-%m-%d")
@@ -66,12 +61,8 @@ qplot(total_steps2$x, geom="histogram", binwidth = 1000,
       main = "Total steps per day")                  
 mean(total_steps2$x, na.rm = T)
 median(total_steps2$x, na.rm = T)
-```
-The mean and median are lower after replacing missing values by daily or weekly medians. The histogram looks surprisingly similar.
 
-
-## Are there differences in activity patterns between weekdays and weekends?
-```{r}
+## weekend vs weekdays
 data3$weekday = weekdays(data3$date)
 data3$weekend = "weekday"
 data3$weekend[data3$weekday %in% c("Saturday", "Sunday")] = "weekend"
@@ -85,12 +76,11 @@ weekenddata = data3[data3$weekend == "weekend",]
 steps_per_int_wday$weekend = aggregate(weekenddata$steps, list(weekenddata$interval), mean)[,2]
 names(steps_per_int_wday)[1:2] = c("int","weekday")
 
-# change to long format and plot
 steps_per_int_w_long = reshape(steps_per_int_wday, varying = list(2:3), v.names = "steps",
                                timevar = "weekend", idvar = "int", direction="long")
-steps_per_int_w_long$weekend = factor(steps_per_int_w_long$weekend) 
+
+ 
+# make plots
+steps_per_int_w_long$weekend = factor(steps_per_int_w_long$weekend)
 ggplot(data=steps_per_int_w_long, aes(x=int, y=steps, group=weekend)) +
   geom_line() + facet_wrap(~weekend)
-```
-
-Unsurpirsingly, there are differences. This person seems to be more active in the early morning during weekdays but has a more uniform pattern of activity across the day on weekends.
